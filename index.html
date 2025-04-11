@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Crop Recommendation & Yield Prediction</title>
+    <style>
+     * {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #f8f9fa;
+  margin: 0;
+  padding: 0;
+}
+
+.container-fluid {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+h2 {
+  color: #212529;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  border-left: 5px solid #198754;
+  padding-left: 15px;
+}
+
+form {
+  background: #ffffff;
+  padding: 30px;
+  margin-bottom: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+form:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+input,
+select,
+button {
+  display: block;
+  margin: 12px 0;
+  padding: 12px 14px;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  font-size: 1rem;
+}
+
+input:focus,
+select:focus {
+  border-color: #198754;
+  outline: none;
+  box-shadow: 0 0 5px rgba(25, 135, 84, 0.25);
+}
+
+button {
+  background-color: #198754;
+  color: white;
+  font-weight: bold;
+  border: none;
+  transition: background-color 0.2s ease-in-out;
+}
+
+button:hover {
+  background-color: #157347;
+}
+
+label {
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.result {
+  margin-top: 15px;
+  padding: 12px 16px;
+  background: #e9fbe9;
+  border-left: 5px solid #198754;
+  color: #155724;
+  font-size: 1rem;
+  border-radius: 4px;
+}
+
+    </style>
+  </head>
+  <body>
+    <h2>🌾 Crop Recommendation</h2>
+    <form id="cropForm">
+      <input type="number" name="N" placeholder="Nitrogen" required />
+      <input type="number" name="P" placeholder="Phosphorus" required />
+      <input type="number" name="K" placeholder="Potassium" required />
+      <input
+        type="number"
+        name="temperature"
+        placeholder="Temperature"
+        required
+      />
+      <input type="number" name="humidity" placeholder="Humidity" required />
+      <input type="number" name="ph" placeholder="pH" required />
+      <input type="number" name="rainfall" placeholder="Rainfall" required />
+      <button type="submit">Recommend Crop</button>
+      <div class="result" id="cropResult"></div>
+    </form>
+
+    <h2>🌱 Yield Prediction</h2>
+    <form id="yieldForm">
+      <select name="Region" required>
+        <option value="">Select Region</option>
+        <option value="North">North</option>
+        <option value="South">South</option>
+        <option value="East">East</option>
+        <option value="West">West</option>
+      </select>
+
+      <select name="Soil_Type" required>
+        <option value="">Select Soil Type</option>
+        <option value="Clay">Clay</option>
+        <option value="Sandy">Sandy</option>
+        <option value="Loamy">Loamy</option>
+        <option value="Black">Black</option>
+        <option value="Red">Red</option>
+      </select>
+
+      <select name="Crop" required>
+        <option value="">Select Crop</option>
+        <option value="Wheat">Wheat</option>
+        <option value="Rice">Rice</option>
+        <option value="Maize">Maize</option>
+        <option value="Sugarcane">Sugarcane</option>
+        <!-- Add more crops based on model -->
+      </select>
+
+      <input
+        type="number"
+        name="Rainfall_mm"
+        placeholder="Rainfall (mm)"
+        step="0.1"
+        required
+      />
+      <input
+        type="number"
+        name="Temperature_Celsius"
+        placeholder="Temperature (°C)"
+        step="0.1"
+        required
+      />
+
+      <label>
+        <input type="checkbox" name="Fertilizer_Used" /> Fertilizer Used
+      </label>
+
+      <label>
+        <input type="checkbox" name="Irrigation_Used" /> Irrigation Used
+      </label>
+
+      <select name="Weather_Condition" required>
+        <option value="">Select Weather Condition</option>
+        <option value="Sunny">Sunny</option>
+        <option value="Rainy">Rainy</option>
+        <option value="Cloudy">Cloudy</option>
+        <option value="Dry">Dry</option>
+      </select>
+
+      <input
+        type="number"
+        name="Days_to_Harvest"
+        placeholder="Days to Harvest"
+        required
+      />
+
+      <button type="submit">Predict Yield</button>
+      <div class="result" id="yieldResult"></div>
+    </form>
+
+    <script>
+      // Crop Recommendation
+      document
+        .getElementById("cropForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const body = {};
+          formData.forEach((value, key) => (body[key] = parseFloat(value)));
+
+          const res = await fetch("http://127.0.0.1:8000/api/recommend-crop/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          const data = await res.json();
+          document.getElementById("cropResult").textContent =
+            "Recommended Crop: " + data.recommended_crop;
+        });
+
+      // Yield Prediction
+      document
+        .getElementById("yieldForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const body = {};
+
+          // Handle checkbox and other inputs
+          formData.forEach((value, key) => {
+            if (key === "Fertilizer_Used" || key === "Irrigation_Used") {
+              body[key] = formData.get(key) === "on"; // true if checked
+            } else if (!isNaN(value) && value !== "") {
+              body[key] = parseFloat(value);
+            } else {
+              body[key] = value;
+            }
+          });
+
+          const res = await fetch("http://127.0.0.1:8000/api/predict-yield/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          const data = await res.json();
+          document.getElementById("yieldResult").textContent =
+            "Predicted Yield: " + data.predicted_yield + " tons";
+        });
+    </script>
+  </body>
+</html>
